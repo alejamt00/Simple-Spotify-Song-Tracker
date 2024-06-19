@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Song Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #00000000;
+            color: #FFFFFF;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            transition: opacity 1s ease;
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .song-info {
+            background-color: #2C2C2C;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            width: 600px;
+            transition: opacity 1s ease, background-color 1s ease;
+        }
+
+        .inactive {
+            opacity: 0.5;
+            background-color: #1a1a1a;
+        }
+
+        .track-info {
+            margin-left: 20px;
+            text-align: left;
+            flex: 1;
+        }
+
+        .track-name-container {
+            overflow: hidden;
+            width: 430px;
+        }
+
+        .track-name {
+            font-size: 28px;
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        @keyframes scrollText {
+            0% {
+                transform: translateX(0%);
+            }
+
+            5% {
+                opacity: 1;
+            }
+
+            10% {
+                transform: translateX(0%);
+                opacity: 1;
+            }
+
+            95% {
+                transform: translateX(calc(-100% + 100px));
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(calc(-100% + 100px));
+            }
+        }
+
+        .scroll-animation .track-name {
+            animation: scrollText 10s linear infinite;
+            animation-delay: 3s;
+        }
+
+        .artist-name {
+            font-size: 18px;
+            opacity: 0.7;
+            margin-top: 1px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            margin-top: 20px;
+            background-color: #555555;
+            height: 10px;
+            position: relative;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar .progress {
+            width: 0%;
+            height: 100%;
+            background-color: #1DB954;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: width 0.3s ease;
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+
+        .album-container {
+            width: 150px;
+            height: 150px;
+            position: relative;
+        }
+
+        .cd {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            border-radius: 50%;
+            overflow: hidden;
+            animation: spin 30s linear infinite;
+            transform-origin: center;
+            transition: opacity 2s ease;
+            border: 2px solid #FFFFFF;
+            box-sizing: border-box;
+        }
+
+        .cd::before {
+            content: '';
+            position: absolute;
+            width: 20%;
+            height: 20%;
+            top: 40%;
+            left: 40%;
+            border-radius: 50%;
+            background-color: #181818;
+            z-index: 1;
+            border: 1px solid #FFFFFF;
+            box-sizing: border-box;
+        }
+
+        .cd img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            border-radius: 50%;
+            transition: opacity 2s ease;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="song-info inactive">
+            <div class="album-container">
+                <div  class="cd">
+                    <img id="album-cover" src="" alt="">
+                </div>
+            </div>
+            <div class="track-info">
+                <div class="track-name-container">
+                    <div class="track-name">Track Name</div>
+                </div>
+                <h3 class="artist-name">Artist Name</h3>
+                <div class="progress-bar">
+                    <div class="progress" id="progress-bar"></div>
+                </div>
+                <div class="time-info">
+                    <span id="current-time">00:00</span>
+                    <span id="total-time">00:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const accessToken = 'accessToken';  // Replace with your Spotify Access Token. More info on README
+        const refreshToken = 'refreshToken';  // Replace with your Spotify Refresh Token. More info on README
+        const clientId = 'clientId';  // Replace with your Spotify Client ID from https://developer.spotify.com/
+        const clientSecret = 'clientSecret';  // Replace with your Spotify Client Secret from https://developer.spotify.com/
+
+        const refreshTokenUrl = 'https://accounts.spotify.com/api/token';
+        const currentTrackUrl = 'https://api.spotify.com/v1/me/player/currently-playing';
+
+        let currentTrackId = null; // To store the current track ID
+
+        async function fetchWithRefresh(url, options) {
+            let response = await fetch(url, options);
+
+            if (response.status === 401) {
+                const refreshResponse = await fetch(refreshTokenUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Authorization': 'Basic ' + btoa(clientId + ':' + clientSecret)
+                    },
+                    body: `grant_type=refresh_token&refresh_token=${refreshToken}`
+                });
+
+                const refreshData = await refreshResponse.json();
+                options.headers['Authorization'] = 'Bearer ' + refreshData.access_token;
+                response = await fetch(url, options);
+            }
+
+            return response;
+        }
+
+        async function fetchCurrentTrack() {
+            const response = await fetchWithRefresh(currentTrackUrl, {
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+
+            const songInfo = document.querySelector('.song-info');
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.item) {
+                    if (data.item.id !== currentTrackId) {
+                        updateTrackInfo(data);
+                        songInfo.classList.remove('inactive'); // Remove inactive class when there's a new track
+                    }
+                    updateProgress(data); // Update track progress
+                } else {
+                    songInfo.classList.add('inactive'); // Add inactive class when no track is playing
+                }
+            } else {
+                console.error('Error fetching current track:', response.status, response.statusText);
+                songInfo.classList.add('inactive'); // Add inactive class on error
+            }
+        }
+
+        function updateTrackInfo(data) {
+            const songInfo = document.querySelector('.song-info');
+            const albumCover = document.getElementById('album-cover');
+            const trackNameContainer = document.querySelector('.track-name-container');
+            const trackName = document.querySelector('.track-name');
+            const artistName = document.querySelector('.artist-name');
+
+            albumCover.style.opacity = 0;
+            songInfo.style.opacity = 0;
+
+            setTimeout(() => {
+                albumCover.src = data.item.album.images[0].url;
+                albumCover.style.opacity = 1;
+
+                trackName.textContent = data.item.name;
+                artistName.textContent = data.item.artists.map(artist => artist.name).join(', ');
+
+                if (trackName.scrollWidth > trackNameContainer.clientWidth) {
+                    trackNameContainer.classList.add('scroll-animation');
+                } else {
+                    trackNameContainer.classList.remove('scroll-animation');
+                }
+
+                currentTrackId = data.item.id;
+
+                songInfo.style.opacity = 1;
+                songInfo.classList.remove('inactive'); // Remove inactive class
+            }, 300);
+        }
+
+        function updateProgress(data) {
+            const progressBar = document.getElementById('progress-bar');
+            const currentTime = document.getElementById('current-time');
+            const totalTime = document.getElementById('total-time');
+
+            const progress = (data.progress_ms / data.item.duration_ms) * 100;
+            progressBar.style.width = progress + '%';
+
+            const currentTimeFormatted = millisToMinutesAndSeconds(data.progress_ms);
+            const totalTimeFormatted = millisToMinutesAndSeconds(data.item.duration_ms);
+
+            currentTime.textContent = currentTimeFormatted;
+            totalTime.textContent = totalTimeFormatted;
+        }
+
+        function millisToMinutesAndSeconds(ms) {
+            const minutes = Math.floor(ms / 60000);
+            const seconds = ((ms % 60000) / 1000).toFixed(0);
+            return `${minutes}:${(seconds < 10 ? '0' : '')}${seconds}`;
+        }
+
+        setInterval(fetchCurrentTrack, 1000);
+        fetchCurrentTrack();
+    </script>
+</body>
+
+</html>
