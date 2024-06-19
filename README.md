@@ -65,7 +65,7 @@ const clientSecret = 'clientSecret';  Replace with your Spotify Client Secret fr
 
 ## Running the Application
 
-Open `spotify_current_track.html` in a web browser. The application will fetch and display the currently playing track from your Spotify account.
+Open `spotify_current_track.html` in a web browser source. The application will fetch and display the currently playing track from your Spotify account.
 
 ## License
 
