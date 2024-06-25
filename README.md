@@ -2,6 +2,8 @@
 
 This simple web application displays the currently playing track on Spotify, along with album art, track information, and progress.
 
+![test](https://i.ibb.co/swkQfkf/Spoti-Obs-Track.gif)
+
 ## Getting Started
 
 To use this project, you'll need to obtain the following credentials from Spotify:
