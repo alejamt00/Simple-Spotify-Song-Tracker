@@ -1,6 +1,6 @@
 # Spotify Song Tracker for OBS
 
-This web application displays the currently playing track on Spotify, along with album art, track information, and progress.
+This simple web application displays the currently playing track on Spotify, along with album art, track information, and progress.
 
 ## Getting Started
 
