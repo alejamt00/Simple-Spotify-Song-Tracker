@@ -57,10 +57,10 @@ Replace `authorization_code`, `your_redirect_uri`, `your_client_id`, and `your_c
 Replace the placeholders in `spotify_current_track.html` with your obtained credentials:
 
 ```javascript
-const accessToken = 'accessToken';  Replace with your Spotify Access Token. More info on README
-const refreshToken = 'refreshToken';  Replace with your Spotify Refresh Token. More info on README
-const clientId = 'clientId';  Replace with your Spotify Client ID from https://developer.spotify.com/
-const clientSecret = 'clientSecret';  Replace with your Spotify Client Secret from https://developer.spotify.com/
+const accessToken = 'accessToken';  //Replace with your Spotify Access Token. More info on README
+const refreshToken = 'refreshToken';  //Replace with your Spotify Refresh Token. More info on README
+const clientId = 'clientId';  //Replace with your Spotify Client ID from https://developer.spotify.com/
+const clientSecret = 'clientSecret';  //Replace with your Spotify Client Secret from https://developer.spotify.com/
 ```
 
 ## Running the Application
